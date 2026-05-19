@@ -578,7 +578,7 @@
                 tr.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-full bg-gemini-bg flex items-center justify-center font-bold text-xs text-gemini-textSecondary">
+                            <div class="w-8 h-8 rounded-full bg-gemini-bg flex items-center justify-center font-bold text-xs text-gemini-textSecondary font-poppins">
                                 ${lead.name.charAt(0)}
                             </div>
                             <div>
@@ -659,7 +659,7 @@
             }
 
             renderTable(filtered);
-            document.getElementById('table-footer-info').innerText = `Mostrando ${filtered.length} de ${leadsData.length} registros totales.`;
+            document.getElementById('table-footer-info').innerText = `Mostrando ${filtered.length} de ${leadsData.length} interesados totales.`;
         }
 
         // --- SISTEMA DE MODELOS DE RESPUESTA IA (GEMINI) ---
@@ -805,4 +805,90 @@
             
             const userMsgHtml = `
                 <div class="flex gap-2 items-start justify-end max-w-[85%] ml-auto">
-                    <div class="bg-gemini-blue text-white p-
+                    <div class="bg-gemini-blue text-white p-3 rounded-2xl text-xs shadow-sm leading-relaxed">
+                        ${text}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', userMsgHtml);
+            inputEl.value = "";
+            container.scrollTop = container.scrollHeight;
+
+            // Agregar burbuja de carga temporal para la respuesta de la IA
+            const loadingId = "loader-" + Date.now();
+            const loadingHtml = `
+                <div id="${loadingId}" class="flex gap-2 items-start max-w-[85%]">
+                    <div class="w-6 h-6 rounded-full bg-gemini-textPrimary text-white text-[10px] flex items-center justify-center font-bold">✨</div>
+                    <div class="bg-white p-3 rounded-2xl border border-gemini-border text-xs text-gemini-textSecondary shadow-sm loading-shimmer">
+                        <i class="fa-solid fa-circle-notch animate-spin mr-1"></i> Pensando estrategia...
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', loadingHtml);
+            container.scrollTop = container.scrollHeight;
+
+            // Construir contexto estratégico del negocio para Palti Coach AI
+            const chatbotSystemInstruction = `
+                Eres Palti Coach AI, un consultor de ventas senior especializado en coaching nutricional e integrativo para el 'Plan 90 PRO' (continuación del Reto Desinflámate 21).
+                Estás aquí para dar soporte inmediato a los agentes comerciales o closers que operan este panel de control.
+                Tu conocimiento se basa en los siguientes datos de la cohorte actual:
+                - Hay 54 interesados totales de la cohorte de Mayo 2026.
+                - 27 de ellos son calientes (piden información directa de pago, costos, o link del Plan 90 PRO).
+                - 22 ya se inscribieron y confirmaron pago (están preguntando qué comer entre retos).
+                - 5 preguntan 'qué sigue' de forma sutil sin mencionar el plan 90, requiriendo un abordaje más sutil.
+                - El precio de preventa es de $650 limitado a un bloque prioritario de 20 cupos hasta el 22 de mayo de 2026.
+                - Hay preocupaciones recurrentes sobre: cuotas sin interés, pagos internacionales con tarjeta de crédito, mantenimiento del acceso a videos grabados del reto, e inicios flexibles coordinados para mediados de junio congelando cupo hoy.
+                
+                Responde las preguntas del Closer de manera directa, breve, con pautas accionables paso a paso y plantillas cortas y listas para WhatsApp si te lo solicitan. Mantén un tono alentador y profesional.
+            `;
+
+            try {
+                const aiResponse = await callGemini(text, chatbotSystemInstruction);
+                
+                // Remover cargador
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.remove();
+
+                // Agregar respuesta final de Gemini
+                const botHtml = `
+                    <div class="flex gap-2 items-start max-w-[85%]">
+                        <div class="w-6 h-6 rounded-full bg-gemini-textPrimary text-white text-[10px] flex items-center justify-center font-bold">✨</div>
+                        <div class="bg-white p-3 rounded-2xl border border-gemini-border text-xs text-gemini-textPrimary shadow-sm leading-relaxed whitespace-pre-line">
+                            ${aiResponse}
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', botHtml);
+                container.scrollTop = container.scrollHeight;
+
+            } catch (error) {
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.remove();
+
+                const errorHtml = `
+                    <div class="flex gap-2 items-start max-w-[85%]">
+                        <div class="w-6 h-6 rounded-full bg-gemini-red text-white text-[10px] flex items-center justify-center font-bold">⚠️</div>
+                        <div class="bg-red-50 text-red-800 p-3 rounded-2xl border border-red-100 text-xs shadow-sm leading-relaxed">
+                            No logramos contactar a la inteligencia artificial en este momento. Por favor verifica los tokens o la red e intenta de nuevo.
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', errorHtml);
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+
+        // INICIALIZACIÓN ULTRA-ROBUSTA COMPATIBLE CON ENTORNOS EMBEBIDOS (CANVAS)
+        function initApp() {
+            renderTable(leadsData);
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initApp();
+        } else {
+            document.addEventListener('DOMContentLoaded', initApp);
+        }
+    </script>
+</body>
+</html>
